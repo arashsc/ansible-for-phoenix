@@ -1,0 +1,5 @@
+- name: wget erlang rpm
+  get_url: url="http://packages.erlang-solutions.com/erlang-solutions-1.0-1.noarch.rpm" dest="/home/deploy"
+
+- name: install erlang
+  yum: state=installed name=erlang

@@ -1,0 +1,17 @@
+- hosts: production
+  become_user: "TODO: deploy user"
+  become_method: su
+  vars:
+    ansistrano_after_update_code_tasks_file: roles/after_update_code.yml
+    ansistrano_keep_releases: 3
+    ansistrano_deploy_via: git
+    ansistrano_git_repo: "TODO: REPOSITORY_PATH.git"
+    ansistrano_git_identity_key_path: "{{ identity_key_path }}"
+    ansistrano_git_branch: master
+    ansistrano_shared_paths: ["deps", "public", "node_modules", "log", "priv/static/images/uploads"]
+    ansistrano_deploy_to: "{{ deploy_root_path }}"
+    ansible_ssh_user: "TODO: ssh user"
+  vars_files:
+    - vars/common.yml
+  roles:
+    - carlosbuenosvinos.ansistrano-deploy

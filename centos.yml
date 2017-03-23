@@ -1,0 +1,9 @@
+- hosts: production
+  become_user: root
+  tasks:
+    - include: tasks/base.yml
+    - include: tasks/erlang.yml
+    - include: tasks/elixir.yml
+    - include: tasks/postgres.yml
+    - include: tasks/node.yml
+    - include: tasks/nginx.yml

@@ -1,0 +1,20 @@
+- name: install elixir
+  git: repo=https://github.com/elixir-lang/elixir.git dest="/opt/elixir" accept_hostkey=yes
+
+- stat: path=/usr/local/bin/elixir
+  register: links
+
+- name: compile elixir
+  command: "make clean test"
+  args:
+    chdir: "/opt/elixir"
+  when: links.stat.islnk is not defined
+
+- name: create symlinks
+  command: "ln -s {{ item }}"
+  with_items:
+    - /opt/elixir/bin/iex /usr/local/bin/iex
+    - /opt/elixir/bin/mix /usr/local/bin/mix
+    - /opt/elixir/bin/elixir /usr/local/bin/elixir
+    - /opt/elixir/bin/elixirc /usr/local/bin/elixirc
+  when: links.stat.islnk is not defined

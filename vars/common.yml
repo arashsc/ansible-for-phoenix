@@ -1,0 +1,11 @@
+mix_env: 'prod'
+app_port: '4000'
+app_name: 'TODO'
+postgres_password: 'TODO: Postgress password'
+postgres_user_name: 'TODO'
+postgres_db_name: 'TODO'
+deploy_root_path: 'TODO'
+deploy_path: "{{ deploy_root_path }}/current"
+identity_key_path: 'TODO: absolute path to ssh private key'
+
+deploy_type: 'initial'

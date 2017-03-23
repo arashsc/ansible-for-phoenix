@@ -1,0 +1,24 @@
+- name: yum complete transaction
+  command: yum-complete-transaction --cleanup-only
+
+- name: yum base tools
+  yum: state=installed name={{ item }}
+  with_items:
+    - epel-release
+    - vim
+    - gcc
+    - gcc-c++
+    - ncurses
+    - ncurses-devel
+    - java-1.7.0-openjdk-devel
+    - fop
+    - wget
+    - tar
+    - libxml2-devel
+    - git
+    - rsync
+    - htop
+    - python-psycopg2
+
+- name: disabled SELinux
+  selinux: state=disabled

@@ -1,0 +1,102 @@
+- name: ensure database is created
+  postgresql_db:
+    name: "{{ postgres_db_name }}"
+    login_password: "{{ postgres_password }}"
+    encoding: UTF-8
+    owner: "{{ postgres_user_name }}"
+
+- name: ensure database user is created
+  postgresql_user:
+    db: "{{ postgres_db_name }}"
+    name: "{{ postgres_user_name }}"
+    password: "{{ postgres_password }}"
+    priv: all
+
+- name: mix tasks [deps.get && compile]
+  command: mix {{ item }}
+  environment:
+    MIX_ENV: "{{ mix_env }}"
+  with_items:
+    - local.hex
+    - local.rebar
+    - do deps.get, compile
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+
+- name: check shared node_modules
+  stat: path={{ deploy_root_path }}/shared/node_modules
+  register: node_modules_available
+
+- name: create symlink for node_modules
+  file: src={{ deploy_root_path }}/shared/node_modules dest={{ ansistrano_release_path.stdout }}/node_modules state=link
+  when: node_modules_available.stat.isdir is defined and node_modules_available.stat.isdir
+
+- name: install dependencies through npm
+  npm:
+    path: "{{ ansistrano_release_path.stdout }}"
+    state: present
+    global: false
+    production: true
+
+- name: compile assets and css
+  command: ./node_modules/brunch/bin/brunch b -p
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+
+- name: compile js files
+  command: npm run deploy
+  environment:
+    MIX_ENV: "{{ mix_env }}"
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+
+- name: mix tasks [phoenix.digest && release.init]
+  command: mix {{ item }}
+  environment:
+    MIX_ENV: "{{ mix_env }}"
+  with_items:
+    - phoenix.digest
+    - release.init
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+
+- when: deploy_type == 'initial'
+  name: generate a release
+  command: mix release --env=prod
+  environment:
+    MIX_ENV: "{{ mix_env }}"
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+
+- when: deploy_type == 'upgrade'
+  name: generate a release
+  command: mix release --env=prod --upgrade
+  environment:
+    MIX_ENV: "{{ mix_env }}"
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+
+- name: stop server
+  command: "rel/{{ app_name }}/bin/{{ app_name }} stop"
+  environment:
+    MIX_ENV: "{{ mix_env }}"
+    PORT: "{{ app_port }}"
+  args:
+    chdir: "{{ deploy_path }}"
+
+- name: start server
+  command: "rel/{{ app_name }}/bin/{{ app_name }} start"
+  environment:
+    MIX_ENV: "{{ mix_env }}"
+    PORT: "{{ app_port }}"
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+
+- name: ecto tasks
+  command: mix {{ item }}
+  environment:
+    MIX_ENV: "{{ mix_env }}"
+  with_items:
+    - ecto.migrate
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"

@@ -1,0 +1,37 @@
+- name: install postgres 9.5
+  yum: name=https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-2.noarch.rpm
+
+- name: install postgresql server
+  yum: name={{ item }} state=installed
+  with_items:
+    - postgresql95
+    - postgresql95-server
+    - postgresql95-devel
+
+- stat: path=/var/lib/pgsql/9.5/data/PG_VERSION
+  register: dbcluster
+
+- name: initdb
+  shell: /usr/pgsql-9.5/bin/initdb -E UTF8 -D /var/lib/pgsql/9.5/data --no-locale
+  become: yes
+  become_user: postgres
+  when: not dbcluster.stat.exists
+
+- name: start postgresql server
+  service: name=postgresql-9.5 state=started
+
+- name: set a PATH for postgres
+  lineinfile: dest=/etc/bashrc regexp="^export PATH\=\/usr\/pgsql-9.5\/bin" line="export PATH=/usr/pgsql-9.5/bin:$PATH" state=present
+
+- name: Source the bashrc file
+  shell: source /etc/bashrc
+
+- name: create root db
+  postgresql_db: name=root
+
+- name: create root role
+  postgresql_user:
+    name: root
+    role_attr_flags: SUPERUSER,CREATEDB,LOGIN,INHERIT
+    db: root
+    priv: all

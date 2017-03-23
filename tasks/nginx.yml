@@ -1,0 +1,11 @@
+- name: nginx
+  yum: state=installed name={{ item }}
+  with_items:
+    - epel-release
+    - nginx
+
+- name: execute nginx
+  command: "{{ item }}"
+  with_items:
+    - systemctl start nginx
+    - systemctl enable nginx

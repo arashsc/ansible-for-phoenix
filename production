@@ -1,0 +1,5 @@
+[production]
+TODO: IP address of your production server
+
+[production:vars]
+env=production
